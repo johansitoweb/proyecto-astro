@@ -1,0 +1,48 @@
+---
+import { getImage } from 'astro:assets';
+import { BaseImage } from '../../components/image';
+import BaseIndex from '../../layouts/BaseIndex.astro';
+import { getImageDate } from '../index.astro';
+import images from '../../assets/images/imageList';
+
+export async function getStaticPaths() {
+	const staticPaths = await Promise.all(
+		Object.entries(images).map(async ([key, value]) => {
+			const date = await getImageDate(value);
+			const dashedSlug =
+				key.slice(0, 3) + '-' + key.slice(3, -3) + '-' + key.slice(-3);
+
+			const thumbnail = await getImage({
+				src: value,
+				width: 640,
+				quality: 80,
+				format: 'jpeg',
+				alt: 'Gallery Image',
+			});
+
+			return {
+				params: {
+					slug: dashedSlug,
+				},
+				props: {
+					...value,
+					date,
+					thumbnail: thumbnail.src,
+				},
+			};
+		})
+	);
+
+	return staticPaths;
+}
+
+const props = Astro.props;
+---
+
+<BaseIndex
+	title="Galerie d'Ayaan"
+	description="Ayaan Zaidi's personal image feed. Mild obsession with aircrafts and shiny things. Mostly shot on a mobile camera."
+	permalink={`https://gallery.obviy.us/image/${props.slug}`}
+	previewImage={props.thumbnail}>
+	<BaseImage {...props} client:load />
+</BaseIndex>
